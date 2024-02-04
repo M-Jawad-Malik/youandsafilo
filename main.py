@@ -104,19 +104,21 @@ def scrape_play_and_safilo():
             print('login form not found')
 
         if login_success:
-            page.wait_for_timeout(2000)
-            scrape_eye_glasses(page, 0)
-            # page.goto(CATEGORY_URL, wait_until='load')
+            page.wait_for_timeout(1000)
+            categories = ['Eyeglasses', 'Sunglasses']
+            
+            for category in categories:
+                scrape_category_products(category, page, 0)
 
 is_scraped = lambda path: os.path.exists(os.path.join(path, 'scrape_complete.txt'))
-def scrape_eye_glasses(page, index):
-    button_text = 'Eyeglasses'
+def scrape_category_products(category, page, index):
 
-    dropdown = page.query_selector(f'div.slds-dropdown-trigger.slds-dropdown-trigger_hover button.slds-button:has-text("{button_text}")')
+    dropdown_selector = f'div.slds-dropdown-trigger.slds-dropdown-trigger_hover button.slds-button:has-text("{category}")'
+    dropdown = page.query_selector(dropdown_selector)
     
     dropdown.click()
-    
-    container_box = page.query_selector('.header-menu--category-related-dropdown__inner')
+# > div.header-menu--category-related-dropdown__inner
+    container_box = page.query_selector(f'{dropdown_selector} + div.header-menu--category-related-dropdown ')
     categories = container_box.query_selector_all('.header-menu--clickable-item')
 
     if index == len(categories):
@@ -130,7 +132,7 @@ def scrape_eye_glasses(page, index):
     category_selector = page.wait_for_selector('h1[c-lexproductcategorybanner_lexproductcategorybanner]')
     if category_selector:
         category_name =category_selector.inner_text().lower().replace(' ', '-')
-        category_path = os.path.join(f'{ROOT_PATH}/{button_text.lower()}', category_name.replace(f'{button_text.lower()}-', ''))
+        category_path = os.path.join(f'{ROOT_PATH}/{category.lower()}', category_name.replace(f'{category.lower()}-', ''))
         os.makedirs(category_path, exist_ok=True)
         
         if not is_scraped(category_path):
@@ -138,7 +140,7 @@ def scrape_eye_glasses(page, index):
         else:
             print(f'products for {category_name} already scrapped')
 
-        scrape_eye_glasses(page, index+1)
+        scrape_category_products(category, page, index+1)
     else:
         print('Category Banner not found!')
 
